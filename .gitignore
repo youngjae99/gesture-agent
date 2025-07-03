@@ -1,0 +1,17 @@
+# Environments
+.env
+env/
+.venv
+venv/
+
+logs/
+screenshots/
+__pycache__/
+
+# IDEs
+.vscode/
+.idea/
+.cursorrules
+
+# OS
+.DS_Store
