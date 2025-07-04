@@ -140,6 +140,21 @@ class GestureAgentCore(QThread):
             screenshot_quality = self.config_manager.get_config_value('screenshot.quality', 90)
             screenshot_format = self.config_manager.get_config_value('screenshot.format', 'PNG')
             
+            # 스크린샷 캡처를 비동기로 처리
+            screenshot_thread = threading.Thread(
+                target=self._capture_screenshot_async,
+                args=(gesture_type, screenshot_mode, screenshot_quality, screenshot_format)
+            )
+            screenshot_thread.daemon = True
+            screenshot_thread.start()
+            
+        except Exception as e:
+            error_msg = self.error_handler.handle_generic_error(e, "gesture handling")
+            self.error_occurred.emit(error_msg)
+    
+    def _capture_screenshot_async(self, gesture_type: str, screenshot_mode: str, screenshot_quality: int, screenshot_format: str):
+        """비동기로 스크린샷 캡처 및 AI 처리"""
+        try:
             screenshot_path = self.screenshot_manager.capture_screenshot(
                 mode=screenshot_mode,
                 quality=screenshot_quality,
@@ -163,7 +178,7 @@ class GestureAgentCore(QThread):
                 self.tts_manager.speak_text(response, block=False)
             
         except Exception as e:
-            error_msg = self.error_handler.handle_generic_error(e, "gesture handling")
+            error_msg = self.error_handler.handle_generic_error(e, "async screenshot capture")
             self.error_occurred.emit(error_msg)
     
     def _get_gesture_prompt(self, gesture_type: str) -> str:
