@@ -1,90 +1,130 @@
 # GestureAgent - Touchless AI Interface
 
-A macOS application that triggers an OpenAI Assistant with hand gestures and captures screenshots for context-aware AI assistance.
+An application that controls OpenAI Assistant through gestures and captures screenshots to provide context-aware AI assistance.
 
-## Features
+## Overview
 
-- **Real-time Gesture Detection**: Uses webcam and MediaPipe to detect hand gestures
+GestureAgent is an innovative touchless interface that detects hand gestures through webcam and captures screen context to ask contextual questions to OpenAI GPT-4.
+
+## Key Features
+
+- **Real-time Gesture Detection**: Hand gesture detection using webcam and MediaPipe
   - Horizontal wave gesture
   - Palm-up hold gesture
-- **OpenAI Assistant Integration**: Communicates with GPT-4 via OpenAI's Assistant API
-- **Screenshot Capture**: Automatically captures screen context (fullscreen or active window)
-- **GUI Interface**: PyQt5-based interface with system tray support
-- **Text-to-Speech**: Optional audio feedback using macOS's built-in TTS
+- **OpenAI Assistant Integration**: Real-time communication with GPT-4
+- **Screenshot Capture**: Full screen or active window capture
+- **GUI Interface**: User-friendly interface with system tray support
+- **Voice Feedback**: Audio response through macOS built-in TTS
 - **Configuration Management**: Flexible settings for gestures, screenshots, and AI parameters
 
-## Requirements
+## Supported Platforms
 
-- macOS 10.14 or later
-- Python 3.8+
-- Webcam
-- OpenAI API key
+### Python Version
+- **Supported OS**: macOS 10.14 or later
+- **Python**: 3.8 or later
+- **GUI Framework**: PyQt5
 
-## Installation
+### Electron Version (In Development)
+- **Supported OS**: macOS, Windows, Linux
+- **Cross-platform**: Electron-based
 
-1. **Clone or download this repository**
+## Getting Started
+
+Currently, the **Python version** is fully implemented. The Electron version is under development.
+
+### Python Version Installation and Usage
+
+1. **Clone Repository**
    ```bash
-   cd /path/to/gesture-agent
+   git clone [repository-url]
+   cd gesture-agent
    ```
 
-2. **Install dependencies**
+2. **Navigate to Python Version Directory**
+   ```bash
+   cd gesture-agent-python
+   ```
+
+3. **Install Dependencies**
    ```bash
    python3 -m venv venv
-   source venv/bin/activate && pip install --upgrade pip
+   source venv/bin/activate
+   pip install --upgrade pip
    pip install -r requirements.txt
-
    ```
 
-3. **Configure environment variables**
+4. **Environment Variables Setup**
    ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` and add your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   ASSISTANT_ID=your_assistant_id_here  # Optional, will create one if not provided
+   # Create .env file and add OpenAI API key
+   echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
    ```
 
-4. **Grant permissions**
-   - Camera access: System Preferences → Security & Privacy → Camera
-   - Screen recording: System Preferences → Security & Privacy → Screen Recording
+5. **Grant Permissions**
+   - Camera Access: System Preferences → Security & Privacy → Camera
+   - Screen Recording: System Preferences → Security & Privacy → Screen Recording
 
-## Usage
-
-1. **Start the application**
+6. **Run Application**
    ```bash
    python run.py
    ```
 
-2. **Configure settings**
-   - Click "Configuration" to adjust gesture sensitivity, screenshot mode, etc.
-   - Enable/disable text-to-speech feedback
-   - Set screenshot quality and format
+## Usage
 
-3. **Start gesture detection**
-   - Click "Start Detection" in the main window
-   - Perform gestures in front of your webcam:
-     - **Wave**: Move your hand horizontally with fingers extended
-     - **Palm Up**: Hold your palm open facing the camera for 1.5 seconds
+### Gesture Detection
+1. **Start Detection**: Click "Start Detection" in the main window
+2. **Perform Gestures**:
+   - **Wave**: Extend 3+ fingers and move hand horizontally left and right
+   - **Palm Up**: Hold palm facing camera for 1.5 seconds
 
-4. **Minimize to system tray**
-   - Click "Minimize to Tray" to run in background
-   - Access via system tray icon
+### Configuration Management
+- **Configuration** button to adjust gesture sensitivity, screenshot mode, etc.
+- **Voice Feedback** enable/disable
+- **Screenshot Quality** and format settings
 
-## Gestures
+### System Tray
+- **"Minimize to Tray"** to run in background
+- Access through system tray icon
 
-### Wave Gesture
-- Hold up your hand with 3+ fingers extended
-- Move your hand left and right horizontally
-- Must have at least 2 direction changes to trigger
+## Project Structure
 
-### Palm Up Gesture  
-- Hold your palm open facing the camera
-- Keep fingers extended and separated
-- Hold steady for 1.5 seconds to trigger
+```
+gesture-agent/
+├── gesture-agent-python/          # Python Implementation (Complete)
+│   ├── src/
+│   │   ├── gesture_detector.py    # Gesture detection
+│   │   ├── ai_assistant.py        # OpenAI API integration
+│   │   ├── screenshot_manager.py  # Screen capture
+│   │   ├── tts_manager.py         # Text-to-speech
+│   │   ├── config_manager.py      # Configuration management
+│   │   ├── logger.py              # Logging
+│   │   ├── gui.py                 # PyQt5 UI
+│   │   └── main.py                # Main application
+│   ├── assets/                    # Resource files
+│   ├── screenshots/               # Captured screenshots
+│   ├── logs/                      # Application logs
+│   ├── config.json               # Configuration file
+│   ├── requirements.txt          # Python dependencies
+│   └── run.py                    # Launch script
+├── gesture-agent-electron/        # Electron Implementation (In Development)
+├── screenshots/                   # Common screenshot storage
+├── logs/                          # Common log storage
+└── README.md                     # This file
+```
 
-## Configuration
+## Requirements
+
+### System Requirements
+- **macOS**: 10.14 or later
+- **Python**: 3.8 or later (for Python version)
+- **Webcam**: For gesture detection
+- **OpenAI API Key**: For AI functionality
+
+### Permission Requirements
+- **Camera Access Permission**: For gesture detection
+- **Screen Recording Permission**: For screenshot capture
+- **Internet Connection**: For OpenAI API communication
+
+## Configuration Options
 
 ### Gesture Settings (`config.json`)
 ```json
@@ -95,78 +135,51 @@ A macOS application that triggers an OpenAI Assistant with hand gestures and cap
       "confidence_threshold": 0.8
     },
     "palm_up": {
-      "enabled": true, 
+      "enabled": true,
       "confidence_threshold": 0.7
     }
   }
 }
 ```
 
-### Screenshot Settings
-- **Mode**: `fullscreen` or `active_window`
-- **Quality**: 10-100 (JPEG quality)
-- **Format**: `PNG` or `JPEG`
-
 ### Environment Variables (`.env`)
-- `OPENAI_API_KEY`: Your OpenAI API key
+- `OPENAI_API_KEY`: OpenAI API key (required)
 - `ASSISTANT_ID`: OpenAI Assistant ID (optional)
-- `SCREENSHOT_DIR`: Directory for screenshots (default: `./screenshots`)
-- `GESTURE_SENSITIVITY`: Global sensitivity 0.1-1.0 (default: 0.8)
+- `SCREENSHOT_DIR`: Screenshot storage directory
+- `GESTURE_SENSITIVITY`: Global gesture sensitivity (0.1-1.0)
 
 ## Troubleshooting
 
-### Camera Issues
-- Ensure camera permissions are granted
-- Check that no other app is using the camera
-- Try changing `camera_device` in config.json (0, 1, 2, etc.)
+### Common Issues
+- **Camera Issues**: Check permissions and ensure no other app is using camera
+- **AI Integration Issues**: Verify OpenAI API key and internet connection
+- **Screenshot Issues**: Check screen recording permissions
+- **Performance Issues**: Adjust FPS and sensitivity settings
 
-### AI Assistant Issues  
-- Verify OpenAI API key is correct and has credits
-- Check internet connection
-- Review logs in `./logs/` directory
+For detailed troubleshooting, refer to [`gesture-agent-python/README.md`](./gesture-agent-python/README.md).
 
-### Screenshot Issues
-- Grant Screen Recording permission in System Preferences
-- Try switching between fullscreen and active window modes
+## Development Roadmap
 
-### Performance Issues
-- Reduce FPS in config: `"fps": 15`
-- Lower gesture sensitivity: `"confidence_threshold": 0.6`
-- Disable camera preview: `"show_camera_preview": false`
+### Completed Features
+- ✅ Python version fully implemented
+- ✅ Gesture detection system
+- ✅ OpenAI Assistant integration
+- ✅ Screenshot capture
+- ✅ GUI interface
+- ✅ System tray support
 
-## File Structure
+### In Development
+- 🔄 Electron version development
+- 🔄 Cross-platform support
+- 🔄 Additional gesture patterns
 
-```
-gesture-agent/
-├── src/
-│   ├── gesture_detector.py    # Hand gesture detection
-│   ├── ai_assistant.py        # OpenAI API integration  
-│   ├── screenshot_manager.py  # Screen capture functionality
-│   ├── tts_manager.py         # Text-to-speech
-│   ├── config_manager.py      # Configuration management
-│   ├── logger.py              # Logging and error handling
-│   ├── gui.py                 # PyQt5 user interface
-│   └── main.py                # Main application logic
-├── screenshots/               # Captured screenshots
-├── logs/                      # Application logs
-├── config.json               # Application configuration
-├── .env                      # Environment variables
-├── requirements.txt          # Python dependencies
-└── run.py                    # Application launcher
-```
+## Contributing
 
-## Development
-
-### Adding Custom Gestures
-1. Extend `GestureDetector` class in `gesture_detector.py`
-2. Add detection method following existing patterns
-3. Update `config.json` with new gesture settings
-4. Add gesture handling in `main.py`
-
-### Customizing AI Prompts
-- Modify `_get_gesture_prompt()` in `main.py`
-- Add context-specific prompts based on gesture type
-- Include screenshot analysis instructions
+1. Fork this repository
+2. Create a new feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
 
 ## License
 
@@ -175,7 +188,9 @@ This project is provided as-is for educational and personal use.
 ## Support
 
 For issues and questions:
-1. Check the logs in `./logs/` directory
+1. Check logs in `./logs/` directory
 2. Review configuration settings
-3. Ensure all permissions are granted
-4. Verify API key and internet connectivity
+3. Verify required permissions
+4. Check API key and internet connectivity
+
+For more detailed information, refer to [`gesture-agent-python/README.md`](./gesture-agent-python/README.md).
