@@ -1,18 +1,20 @@
-import cv2
 import sys
 import threading
 import time
 from typing import Optional
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
-from gesture_detector import GestureDetector
+import cv2
+from PyQt5.QtCore import QThread, QTimer, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMessageBox
+
 from ai_assistant import AIAssistant
+from config_manager import ConfigManager
+from gesture_detector import GestureDetector
+from gui import MainWindow, create_app
+from logger import (ErrorHandler, GestureAgentLogger,
+                    setup_global_exception_handler)
 from screenshot_manager import ScreenshotManager
 from tts_manager import TTSManager
-from config_manager import ConfigManager
-from logger import GestureAgentLogger, ErrorHandler, setup_global_exception_handler
-from gui import create_app, MainWindow
 
 
 class GestureAgentCore(QThread):
@@ -253,6 +255,7 @@ class GestureAgentApp:
             self._on_error(error_msg)
     
     def _on_gesture_detected(self, gesture_type: str):
+        print(f"Status: Gesture detected - {gesture_type}")
         self.window.status_label.setText(f"Status: Gesture detected - {gesture_type}")
         
         QTimer.singleShot(3000, lambda: 

@@ -17,6 +17,7 @@ class ResponseWindow(QDialog):
         super().__init__(parent)
         self.setWindowTitle("AI Response")
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setWindowIcon(QIcon('assets/app_icon.png'))
         self.setAttribute(Qt.WA_TranslucentBackground)
         
         self.setFixedSize(400, 200)
@@ -164,6 +165,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("GestureAgent")
         self.setFixedSize(640, 520)
         
+        # 컴팩트 모드 관련 속성 추가
+        self.is_compact_mode = False
+        self.normal_size = (640, 520)
+        self.compact_size = (300, 100)
+        self.dragging = False
+        
         self.init_ui()
         self.init_system_tray()
     
@@ -171,23 +178,27 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        layout = QVBoxLayout()
+        self.main_layout = QVBoxLayout()
         
-        header = QLabel("GestureAgent - Touchless AI Interface")
-        header.setAlignment(Qt.AlignCenter)
-        header.setFont(QFont("Arial", 16, QFont.Bold))
-        layout.addWidget(header)
+        # 헤더
+        self.header = QLabel("GestureAgent - Touchless AI Interface")
+        self.header.setAlignment(Qt.AlignCenter)
+        self.header.setFont(QFont("Arial", 16, QFont.Bold))
+        self.main_layout.addWidget(self.header)
         
+        # 상태 라벨
         self.status_label = QLabel("Status: Initializing...")
         self.status_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.status_label)
+        self.main_layout.addWidget(self.status_label)
         
+        # 카메라 프레임
         self.camera_frame = QLabel()
         self.camera_frame.setFixedSize(640, 480)
         self.camera_frame.setStyleSheet("border: 2px solid #333; background-color: #222;")
         self.camera_frame.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.camera_frame)
+        self.main_layout.addWidget(self.camera_frame)
         
+        # 버튼 레이아웃
         button_layout = QHBoxLayout()
         
         self.start_btn = QPushButton("Start Detection")
@@ -198,14 +209,23 @@ class MainWindow(QMainWindow):
         config_btn.clicked.connect(self.show_config)
         button_layout.addWidget(config_btn)
         
+        # 컴팩트 모드 토글 버튼 추가
+        self.compact_btn = QPushButton("Compact Mode")
+        self.compact_btn.clicked.connect(self.toggle_compact_mode)
+        button_layout.addWidget(self.compact_btn)
+        
         minimize_btn = QPushButton("Minimize to Tray")
         minimize_btn.clicked.connect(self.hide)
         button_layout.addWidget(minimize_btn)
         
-        layout.addLayout(button_layout)
+        self.main_layout.addLayout(button_layout)
         
-        central_widget.setLayout(layout)
+        central_widget.setLayout(self.main_layout)
         
+        self.apply_normal_style()
+    
+    def apply_normal_style(self):
+        """일반 모드 스타일 적용"""
         self.setStyleSheet("""
             QMainWindow {
                 background-color: #2b2b2b;
@@ -230,23 +250,197 @@ class MainWindow(QMainWindow):
             }
         """)
     
+    def apply_compact_style(self):
+        """컴팩트 모드 스타일 적용 (glassmorphism)"""
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: rgba(255, 255, 255, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.8);
+                border-radius: 15px;
+                backdrop-filter: blur(50px);
+            }
+            QLabel {
+                color: white;
+                padding: 8px;
+                font-size: 14px;
+                font-weight: bold;
+                background-color: rgba(255, 255, 255, 0.5);
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+            QPushButton {
+                background-color: rgba(74, 158, 255, 0.3);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 5px;
+                border-radius: 6px;
+                font-size: 10px;
+                margin: 2px;
+            }
+            QPushButton:hover {
+                background-color: rgba(74, 158, 255, 0.5);
+            }
+            QPushButton:pressed {
+                background-color: rgba(74, 158, 255, 0.7);
+            }
+        """)
+    
+    def toggle_compact_mode(self):
+        """컴팩트 모드와 일반 모드 전환"""
+        if self.is_compact_mode:
+            self.switch_to_normal_mode()
+        else:
+            self.switch_to_compact_mode()
+    
+    def switch_to_compact_mode(self):
+        """컴팩트 모드로 전환"""
+        self.is_compact_mode = True
+        
+        # 창 속성 변경
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # 크기 조정
+        self.setFixedSize(*self.compact_size)
+        
+        # UI 요소 숨기기/조정
+        self.header.hide()
+        self.camera_frame.hide()
+        
+        # 모든 버튼 숨기기
+        for i in range(self.main_layout.count()):
+            item = self.main_layout.itemAt(i)
+            if item and hasattr(item, 'layout') and item.layout():
+                for j in range(item.layout().count()):
+                    widget = item.layout().itemAt(j).widget()
+                    if isinstance(widget, QPushButton):
+                        widget.hide()
+        
+        # 상태 라벨 크기 조정 (더 큰 폰트)
+        self.status_label.setFixedHeight(50)
+        self.status_label.setFont(QFont("Arial", 14, QFont.Bold))
+        self.status_label.setStyleSheet("color: white; background-color: transparent;")
+        # 컴팩트 모드에서 라벨의 마우스 이벤트 비활성화
+        self.status_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        
+        # 트레이 메뉴 텍스트 업데이트
+        if hasattr(self, 'compact_action'):
+            self.compact_action.setText("Normal Mode")
+        
+        # 스타일 적용
+        self.apply_compact_style()
+        
+        # 화면 우상단으로 이동
+        self.move_to_top_right()
+        
+        # 창 다시 표시
+        self.show()
+    
+    def switch_to_normal_mode(self):
+        """일반 모드로 전환"""
+        self.is_compact_mode = False
+        
+        # 창 속성 복원
+        self.setWindowFlags(Qt.Window)
+        self.setAttribute(Qt.WA_TranslucentBackground, False)
+        
+        # 크기 복원
+        self.setFixedSize(*self.normal_size)
+        
+        # UI 요소 다시 표시
+        self.header.show()
+        self.camera_frame.show()
+        
+        # 모든 버튼 다시 표시
+        for i in range(self.main_layout.count()):
+            item = self.main_layout.itemAt(i)
+            if item and hasattr(item, 'layout') and item.layout():
+                for j in range(item.layout().count()):
+                    widget = item.layout().itemAt(j).widget()
+                    if isinstance(widget, QPushButton):
+                        widget.show()
+        
+        # 상태 라벨 크기 복원
+        self.status_label.setFixedHeight(20)
+        self.status_label.setFont(QFont("Arial", 12))
+        self.status_label.setStyleSheet("")
+        # 노멀 모드에서 라벨의 마우스 이벤트 활성화
+        self.status_label.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        
+        # 버튼 텍스트 변경
+        self.compact_btn.setText("Compact Mode")
+        
+        # 스타일 복원
+        self.apply_normal_style()
+        
+        # 창 다시 표시
+        self.show()
+    
+    def move_to_top_right(self):
+        """창을 화면 우상단으로 이동"""
+        screen = QApplication.desktop().screenGeometry()
+        x = screen.width() - self.width() - 20  # 오른쪽 여백 20px
+        y = 20  # 위쪽 여백 20px
+        self.move(x, y)
+    
+    def mousePressEvent(self, event):
+        """컴팩트 모드에서 창 드래그 가능하도록"""
+        if self.is_compact_mode:
+            if event.button() == Qt.LeftButton:
+                self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+                self.dragging = True
+                event.accept()
+            elif event.button() == Qt.RightButton:
+                # 우클릭으로 노말 모드로 전환
+                self.switch_to_normal_mode()
+                event.accept()
+        else:
+            super().mousePressEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        """컴팩트 모드에서 창 드래그"""
+        if self.is_compact_mode and hasattr(self, 'dragging') and self.dragging and event.buttons() == Qt.LeftButton:
+            print('draggingStart in compact mode')
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        """드래그 종료"""
+        if self.is_compact_mode and hasattr(self, 'dragging'):
+            print('dragend')
+            self.dragging = False
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+    
     def init_system_tray(self):
         self.tray_icon = QSystemTrayIcon(self)
         
-        # Create a simple icon for the system tray
-        pixmap = QPixmap(16, 16)
-        pixmap.fill(QColor(74, 158, 255))
-        painter = QPainter(pixmap)
-        painter.setPen(QColor(255, 255, 255))
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "GA")
-        painter.end()
-        
-        self.tray_icon.setIcon(QIcon(pixmap))
+        # Load SVG icon for the system tray
+        icon_path = "assets/tray_icon.svg"
+        try:
+            self.tray_icon.setIcon(QIcon(icon_path))
+        except Exception as e:
+            # Fallback to simple icon if SVG fails to load
+            pixmap = QPixmap(16, 16)
+            pixmap.fill(QColor(74, 158, 255))
+            painter = QPainter(pixmap)
+            painter.setPen(QColor(255, 255, 255))
+            painter.drawText(pixmap.rect(), Qt.AlignCenter, "GA")
+            painter.end()
+            self.tray_icon.setIcon(QIcon(pixmap))
         
         tray_menu = QMenu()
         
         show_action = tray_menu.addAction("Show Window")
         show_action.triggered.connect(self.show)
+        
+        # 컴팩트 모드 토글 메뉴 추가
+        self.compact_action = tray_menu.addAction("Compact Mode")
+        self.compact_action.triggered.connect(self.toggle_compact_mode)
         
         config_action = tray_menu.addAction("Configuration")
         config_action.triggered.connect(self.show_config)
