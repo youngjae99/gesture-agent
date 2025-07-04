@@ -163,11 +163,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config = config
         self.setWindowTitle("GestureAgent")
-        self.setFixedSize(640, 520)
+        self.setFixedSize(640, 600)
         
         # 컴팩트 모드 관련 속성 추가
         self.is_compact_mode = False
-        self.normal_size = (640, 520)
+        self.normal_size = (640, 600)
         self.compact_size = (300, 100)
         self.dragging = False
         
@@ -190,6 +190,127 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("Status: Initializing...")
         self.status_label.setAlignment(Qt.AlignCenter)
         self.main_layout.addWidget(self.status_label)
+        
+        # 제스처 상태 표시 프레임
+        self.gesture_status_frame = QFrame()
+        self.gesture_status_frame.setFixedHeight(80)
+        self.gesture_status_frame.setStyleSheet("""
+            QFrame {
+                background-color: #1a1a1a;
+                border: 1px solid #444;
+                border-radius: 8px;
+                margin: 5px;
+            }
+        """)
+        
+        gesture_status_layout = QHBoxLayout()
+        gesture_status_layout.setSpacing(20)
+        
+        # Left Hand Gesture 칩
+        self.left_hand_gesture_chip = QLabel("Left: None")
+        self.left_hand_gesture_chip.setFixedSize(140, 35)
+        self.left_hand_gesture_chip.setAlignment(Qt.AlignCenter)
+        self.left_hand_gesture_chip.setStyleSheet("""
+            QLabel {
+                background-color: #333;
+                color: #888;
+                border: 1px solid #555;
+                border-radius: 17px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        """)
+        gesture_status_layout.addWidget(self.left_hand_gesture_chip)
+        
+        # + 연결 표시
+        plus_label_1 = QLabel("+")
+        plus_label_1.setAlignment(Qt.AlignCenter)
+        plus_label_1.setStyleSheet("""
+            QLabel {
+                color: #666;
+                font-size: 14px;
+                font-weight: bold;
+                background: transparent;
+            }
+        """)
+        gesture_status_layout.addWidget(plus_label_1)
+        
+        # Right Hand Gesture 칩
+        self.right_hand_gesture_chip = QLabel("Right: None")
+        self.right_hand_gesture_chip.setFixedSize(140, 35)
+        self.right_hand_gesture_chip.setAlignment(Qt.AlignCenter)
+        self.right_hand_gesture_chip.setStyleSheet("""
+            QLabel {
+                background-color: #333;
+                color: #888;
+                border: 1px solid #555;
+                border-radius: 17px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        """)
+        gesture_status_layout.addWidget(self.right_hand_gesture_chip)
+        
+        # + 연결 표시
+        plus_label_2 = QLabel("+")
+        plus_label_2.setAlignment(Qt.AlignCenter)
+        plus_label_2.setStyleSheet("""
+            QLabel {
+                color: #666;
+                font-size: 14px;
+                font-weight: bold;
+                background: transparent;
+            }
+        """)
+        gesture_status_layout.addWidget(plus_label_2)
+        
+        # Face Gesture 칩
+        self.face_gesture_chip = QLabel("Face: None")
+        self.face_gesture_chip.setFixedSize(140, 35)
+        self.face_gesture_chip.setAlignment(Qt.AlignCenter)
+        self.face_gesture_chip.setStyleSheet("""
+            QLabel {
+                background-color: #333;
+                color: #888;
+                border: 1px solid #555;
+                border-radius: 17px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        """)
+        gesture_status_layout.addWidget(self.face_gesture_chip)
+        
+        # + 연결 표시
+        plus_label_3 = QLabel("+")
+        plus_label_3.setAlignment(Qt.AlignCenter)
+        plus_label_3.setStyleSheet("""
+            QLabel {
+                color: #666;
+                font-size: 14px;
+                font-weight: bold;
+                background: transparent;
+            }
+        """)
+        gesture_status_layout.addWidget(plus_label_3)
+        
+        # AI Status 칩
+        self.ai_status_chip = QLabel("AI: Ready")
+        self.ai_status_chip.setFixedSize(140, 35)
+        self.ai_status_chip.setAlignment(Qt.AlignCenter)
+        self.ai_status_chip.setStyleSheet("""
+            QLabel {
+                background-color: #333;
+                color: #888;
+                border: 1px solid #555;
+                border-radius: 17px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        """)
+        gesture_status_layout.addWidget(self.ai_status_chip)
+        
+        self.gesture_status_frame.setLayout(gesture_status_layout)
+        self.main_layout.addWidget(self.gesture_status_frame)
         
         # 카메라 프레임
         self.camera_frame = QLabel()
@@ -254,10 +375,6 @@ class MainWindow(QMainWindow):
         """컴팩트 모드 스타일 적용 (glassmorphism)"""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: rgba(255, 255, 255, 0.5);
-                border: 1px solid rgba(255, 255, 255, 0.8);
-                border-radius: 15px;
-                backdrop-filter: blur(50px);
             }
             QLabel {
                 color: white;
@@ -265,8 +382,8 @@ class MainWindow(QMainWindow):
                 font-size: 14px;
                 font-weight: bold;
                 background-color: rgba(255, 255, 255, 0.5);
-                border-radius: 8px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 15px;
+                border: 1px solid rgba(255, 255, 255, 0.6);
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             }
             QPushButton {
@@ -299,7 +416,7 @@ class MainWindow(QMainWindow):
         
         # 창 속성 변경
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_OpaquePaintEvent)
         
         # 크기 조정
         self.setFixedSize(*self.compact_size)
@@ -322,7 +439,7 @@ class MainWindow(QMainWindow):
         self.status_label.setFont(QFont("Arial", 14, QFont.Bold))
         self.status_label.setStyleSheet("color: white; background-color: transparent;")
         # 컴팩트 모드에서 라벨의 마우스 이벤트 비활성화
-        self.status_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        # self.status_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         
         # 트레이 메뉴 텍스트 업데이트
         if hasattr(self, 'compact_action'):
@@ -400,7 +517,7 @@ class MainWindow(QMainWindow):
     
     def mouseMoveEvent(self, event):
         """컴팩트 모드에서 창 드래그"""
-        if self.is_compact_mode and hasattr(self, 'dragging') and self.dragging and event.buttons() == Qt.LeftButton:
+        if self.is_compact_mode:
             print('draggingStart in compact mode')
             self.move(event.globalPos() - self.drag_position)
             event.accept()
@@ -487,7 +604,116 @@ class MainWindow(QMainWindow):
         else:
             self.camera_frame.setText("Camera preview disabled")
     
+    def update_gesture_status(self, left_hand_gesture=None, right_hand_gesture=None, face_gesture=None, ai_status=None):
+        """제스처 상태 칩 업데이트"""
+        if left_hand_gesture is not None:
+            if left_hand_gesture:
+                self.left_hand_gesture_chip.setText(f"Left: {left_hand_gesture}")
+                self.left_hand_gesture_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #1e3a8a;
+                        color: #60a5fa;
+                        border: 1px solid #3b82f6;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+            else:
+                self.left_hand_gesture_chip.setText("Left: None")
+                self.left_hand_gesture_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #333;
+                        color: #888;
+                        border: 1px solid #555;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+        
+        if right_hand_gesture is not None:
+            if right_hand_gesture:
+                self.right_hand_gesture_chip.setText(f"Right: {right_hand_gesture}")
+                self.right_hand_gesture_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #0d5016;
+                        color: #4ade80;
+                        border: 1px solid #16a34a;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+            else:
+                self.right_hand_gesture_chip.setText("Right: None")
+                self.right_hand_gesture_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #333;
+                        color: #888;
+                        border: 1px solid #555;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+        
+        if face_gesture is not None:
+            if face_gesture:
+                self.face_gesture_chip.setText(f"Face: {face_gesture}")
+                self.face_gesture_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #4c1d95;
+                        color: #c084fc;
+                        border: 1px solid #7c3aed;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+            else:
+                self.face_gesture_chip.setText("Face: None")
+                self.face_gesture_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #333;
+                        color: #888;
+                        border: 1px solid #555;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+        
+        if ai_status is not None:
+            if ai_status == "processing":
+                self.ai_status_chip.setText("AI: Processing")
+                self.ai_status_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #ea580c;
+                        color: #fed7aa;
+                        border: 1px solid #f97316;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+            elif ai_status == "ready":
+                self.ai_status_chip.setText("AI: Ready")
+                self.ai_status_chip.setStyleSheet("""
+                    QLabel {
+                        background-color: #333;
+                        color: #888;
+                        border: 1px solid #555;
+                        border-radius: 17px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                """)
+    
     def show_response(self, response_text):
+        # AI 상태를 ready로 변경
+        self.update_gesture_status(ai_status="ready")
+        
         response_window = ResponseWindow(response_text, self)
         response_window.show()
     

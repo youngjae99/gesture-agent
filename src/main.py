@@ -22,6 +22,7 @@ class GestureAgentCore(QThread):
     frame_updated = pyqtSignal(object)
     ai_response_received = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
+    gesture_status_updated = pyqtSignal(str, str, str)  # left_hand_gesture, right_hand_gesture, face_gesture
     
     def __init__(self, config_manager: ConfigManager):
         super().__init__()
@@ -115,6 +116,12 @@ class GestureAgentCore(QThread):
                 
                 processed_frame, detected_gesture = self.gesture_detector.process_frame(frame)
                 
+                # 제스처 상태 업데이트 시그널 방출
+                left_hand_gesture = getattr(self.gesture_detector, 'current_left_hand_gesture', None)
+                right_hand_gesture = getattr(self.gesture_detector, 'current_right_hand_gesture', None)
+                face_gesture = getattr(self.gesture_detector, 'current_face_gesture', None)
+                self.gesture_status_updated.emit(left_hand_gesture or "", right_hand_gesture or "", face_gesture or "")
+                
                 self.frame_updated.emit(processed_frame)
                 
                 current_time = time.time()
@@ -182,9 +189,48 @@ class GestureAgentCore(QThread):
             self.error_occurred.emit(error_msg)
     
     def _get_gesture_prompt(self, gesture_type: str) -> str:
+        # 복합 제스처 처리
+        if '+' in gesture_type:
+            parts = gesture_type.split('+')
+            if len(parts) == 3:  # 양손 + 얼굴
+                return f"I'm doing a {parts[0]}, {parts[1]}, and {parts[2]} simultaneously! Can you help me with what's on my screen based on this complex combination?"
+            elif len(parts) == 2:  # 두 가지 조합
+                if 'left_' in parts[0] and 'right_' in parts[1]:
+                    # 양손 조합
+                    left = parts[0].replace('left_', '')
+                    right = parts[1].replace('right_', '')
+                    return f"I'm doing a {left} with my left hand and a {right} with my right hand simultaneously! Can you help me with what's on my screen based on this two-handed gesture?"
+                else:
+                    # 손 + 얼굴 조합
+                    if 'left_' in parts[0]:
+                        hand = parts[0].replace('left_', '')
+                        return f"I'm doing a {hand} with my left hand and a {parts[1]} with my face! Can you help me with what's on my screen based on this combination?"
+                    elif 'right_' in parts[0]:
+                        hand = parts[0].replace('right_', '')
+                        return f"I'm doing a {hand} with my right hand and a {parts[1]} with my face! Can you help me with what's on my screen based on this combination?"
+                    else:
+                        return f"I'm doing both a {parts[0]} and a {parts[1]}! Can you help me with what's on my screen based on this combination?"
+        
+        # 단일 제스처 처리
+        if gesture_type.startswith('left_'):
+            base_gesture = gesture_type.replace('left_', '')
+            return f"I'm doing a {base_gesture} with my left hand! Can you help me with what's currently on my screen?"
+        elif gesture_type.startswith('right_'):
+            base_gesture = gesture_type.replace('right_', '')
+            return f"I'm doing a {base_gesture} with my right hand! Can you help me with what's currently on my screen?"
+        
+        # 기존 단일 제스처 프롬프트
         prompts = {
             'wave': "Hello! I just waved at you. Can you help me with what's currently on my screen?",
-            'palm_up': "I'm holding my palm up to you. Please provide assistance based on what you can see on my screen."
+            'palm_up': "I'm holding my palm up to you. Please provide assistance based on what you can see on my screen.",
+            'thumbs_up': "I'm giving you a thumbs up! Can you analyze what's on my screen and provide positive feedback or suggestions?",
+            'peace_sign': "I'm showing you a peace sign. Can you help me with what's on my screen in a friendly way?",
+            'fist': "I'm making a fist gesture. Can you help me take action on what's currently displayed on my screen?",
+            'face_detected': "I'm looking at the camera! Can you see me and help me with what's currently on my screen?",
+            'blink': "I just blinked deliberately at the camera! Can you help me with what's on my screen quickly?",
+            'wink': "I winked at you! Can you give me a quick tip or insight about what's currently on my screen?",
+            'smile': "I'm smiling at the camera! Can you help me with what's on my screen in a positive and encouraging way?",
+            'eyebrows_raised': "I raised my eyebrows at the camera! Can you help me understand or explain what's currently on my screen?"
         }
         return prompts.get(gesture_type, "I performed a gesture. Please help me with my current screen.")
     
@@ -234,6 +280,8 @@ class GestureAgentApp:
             self.core.frame_updated.connect(self.window.update_camera_frame)
             self.core.ai_response_received.connect(self.window.show_response)
             self.core.error_occurred.connect(self._on_error)
+            self.core.gesture_status_updated.connect(self._on_gesture_status_updated)
+            
             
             self.window.start_btn.clicked.connect(self._toggle_detection)
             
@@ -273,8 +321,19 @@ class GestureAgentApp:
         print(f"Status: Gesture detected - {gesture_type}")
         self.window.status_label.setText(f"Status: Gesture detected - {gesture_type}")
         
+        # AI 상태를 processing으로 변경
+        self.window.update_gesture_status(ai_status="processing")
+        
         QTimer.singleShot(3000, lambda: 
             self.window.status_label.setText("Status: Running - Watching for gestures..."))
+    
+    def _on_gesture_status_updated(self, left_hand_gesture: str, right_hand_gesture: str, face_gesture: str):
+        """제스처 상태 업데이트"""
+        self.window.update_gesture_status(
+            left_hand_gesture=left_hand_gesture if left_hand_gesture else None,
+            right_hand_gesture=right_hand_gesture if right_hand_gesture else None,
+            face_gesture=face_gesture if face_gesture else None
+        )
     
     def _on_error(self, error_message: str):
         self.window.status_label.setText(f"Status: Error - {error_message}")
